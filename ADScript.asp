@@ -1,15 +1,20 @@
 <%
-        
-    ' Credentials for a domain user for LDAP access
-    sLdapReaderUsername = "domain\username"
-    sLdapReaderPassword = "password"
-    
     ' Shared secret from the remote authentication page 
-    sToken     = ""
-    sReturnURL = "http://companyname.freshdesk.com/login/sso"
-        
-    sNoLogin = "Couldn't login to Freshdesk. Please contact your administrator"
-    
+    sToken     = "SECRET_SSO_TOKEN_FROM_FRESHDESK"
+
+
+    sDomainName = "SIMPLE_DOMAIN_NAME" 'Provide the Simple Domain Name - eg: FRESHDESK
+    sDomainController = "DOMAIN_CONTROLLER" 'IP Address or FQDN of ActiveDirectory Server
+    sAdminLogin = "DOMAIN_LOGIN_WITH_READ_ACCESS_IN_AD" 
+    sAdminPassword = "PASSWORD_OF_ABOVE_LOGIN"
+
+
+    '------------------------------------------------
+    sErrorMessage = ""    
+
+    sReturnURL = "http://" & Request.Querystring("host_url") & "/login/sso"
+    Debug  "sReturnURL : " & sReturnURL
+
    
     Const BITS_TO_A_BYTE = 8
     Const BYTES_TO_A_WORD = 4
@@ -22,76 +27,99 @@
 
     on error resume next
 
-    sError = ""
+    'Retrieve authenticated user from 
+    authenticatedUser =  Request.ServerVariables("LOGON_USER")
+    if authenticatedUser = "" then
+        authenticatedUser =  Request.ServerVariables("AUTH_USER") 
+    end if
 
-    ' Retrieve authenticated user
-    strUsername = split(Request.ServerVariables("LOGON_USER"),"\")(1)
-    Debug Request.ServerVariables("LOGON_USER") & " - should be of the form DOMAIN\username - if blank, your IIS probably allows anonymous access to this file."
-    
-    Set rootDSE = GetObject("LDAP://RootDSE")
-    Set oConn = CreateObject("ADODB.Connection")
-
-    sDomainContainer = rootDSE.Get("defaultNamingContext")
-    Debug "DomainContainer: " & sDomainContainer
-
-    oConn.Provider = "ADSDSOObject"
-	oConn.properties("user id") = sLdapReaderUsername
-	oConn.properties("password") = sLdapReaderPassword
-    oConn.Open "ADs Provider"
-
-    sQuery = "<LDAP://" & sDomainContainer & ">;(sAMAccountName=" & strUsername & ");adspath,mail,displayName;subtree"
-    Set userRS = oConn.Execute(sQuery)
-
-    If Not userRS.EOF and not err then
-        sFullName = userRS("displayName")
-        sEmail = userRS("mail")
-        sExternalID = ""
-        
-        Debug "Full name: " & sFullname
-        Debug "Email: " & sEmail
-        
-        if sEmail > "" then
-            sMessage = sFullName & sEmail & sToken 
-            Debug "Message: " & sMessage
-            sDigest = MD5(sMessage)
-            
-            sURL = sReturnURL & _
-                "?name=" & Server.URLEncode(sFullName) & _
-                "&email=" & Server.URLEncode(sEmail) & _
-                "&hash=" & sDigest
-            
-            Debug "Redirecting to: " & sURL
-            if request.QueryString("Debug") = "1" then
-                response.end
-            end if
-            
-            if err.Description = "" then
-                Response.redirect(sURL)
-            end if
-        else
-            Debug "Error: No email"
-            sError = "Account '" & Request.ServerVariables("LOGON_USER") & "' doesn't have an e-mail address."
-        end if
-    
+    if authenticatedUser = "" then
+        sErrorMessage = sErrorMessage & "ERROR: Your IIS probably allows anonymous access to this file."
     else
-        Debug "Error: Account not found"
-        sError = "Account '" & Request.ServerVariables("LOGON_USER") & "' not found."
-    end if
-    
-    Response.Write(sNoLogin)
+        strUsername = split(authenticatedUser,"\")(1) 
+        Debug "Current Logged User : " & strUsername
 
-    if err then
-        sError = Err.Description & vbCrLf & sError
+        Set rootDSE = GetObject("LDAP://" & sDomainController & "/RootDSE")
+        sDomainContainer = rootDSE.Get("defaultNamingContext")
+        Debug "DomainContainer : " & sDomainContainer
+
+        Set objConnection = CreateObject("ADODB.Connection")
+        Set objCommand =   CreateObject("ADODB.Command")
+        objConnection.Provider = "ADsDSOObject"
+        objConnection.Properties("User ID") = sAdminLogin
+        objConnection.Properties("Password") = sAdminPassword
+        objConnection.Properties("Encrypt Password") = TRUE
+        objConnection.Open "Active Directory Provider"
+
+        Set objCommand.ActiveConnection = objConnection
+        objCommand.Properties("Page Size") = 1000
+
+        objCommand.CommandText = "SELECT sAMAccountName, displayName, mail FROM 'LDAP://" & sDomainController & "/" & sDomainContainer  & "' WHERE objectCategory='person' AND objectClass='user' AND sAMAccountName='" & strUsername & "'"
+
+        Debug "Query : " & objCommand.CommandText
+
+        Set objRecordSet = objCommand.Execute
+
+        if Err then
+            Debug "***Query Execute Failed : " & Err.Description
+        else
+            Do Until objRecordSet.EOF
+                sFullName = GetFieldDataFromRecordSet(objRecordSet, "displayName")
+                sEmail = GetFieldDataFromRecordSet(objRecordSet, "mail")
+                Debug "Display Name : " & sFullname
+                Debug "Email : " & sEmail
+                objRecordSet.MoveNext
+            Loop
+
+
+            if sEmail > "" then
+                sMessage = sFullName & sEmail & sToken 
+                Debug "Message: " & sMessage
+                sDigest = MD5(sMessage)
+                
+                sURL = sReturnURL & _
+                    "?name=" & Server.URLEncode(sFullName) & _
+                    "&email=" & Server.URLEncode(sEmail) & _
+                    "&hash=" & sDigest
+                
+                Debug "sURL: " & sURL
+
+                if request.QueryString("Debug") = "1" then
+                    response.end
+                else
+                    if Err.Number = 0  then
+                        Response.redirect(sURL)
+                    end if
+                end if
+                
+
+            else
+                Debug "Error: No email. " & "Account '" & authenticatedUser & "' doesn't have an e-mail address."
+                Err.Raise -1
+            end if
+
+
+        end if
+
+    End If
+
+
+    if Err then
+        sErrorDescription = Err.Description
+        if Err.Number = -1 then
+            sErrorDescription = "Account '" & authenticatedUser & "' doesn't have an e-mail address."     
+        end if
+        sErrorMessage = "Couldn't login to Freshdesk. Please contact your administrator </br></br> Error Message : " & sErrorDescription & "<br/><br/>Debug:" & sErrorMessage
     end if
 
-    response.Write(vbCrLf & vbCrLf & "<!---" & vbCrLf & sError & vbCrlf & "--->")
+    response.Write sErrorMessage 
     
-    userRS.Close
-    oConn.Close
+    objConnection.Close
 
     response.end
 
 function Debug(st)
+    sErrorMessage = sErrorMessage & "<br/>" & st
     if request.QueryString("debug") = "1" then
         response.Write("DEBUG: " & st & "<br/>")
     end if
@@ -448,5 +476,22 @@ Function MD5(sMessage)
     
     MD5 = LCase(WordToHex(a) & WordToHex(b) & WordToHex(c) & WordToHex(d))
 End Function
+
+
+
+Function GetFieldDataFromRecordSet(objRecordSet, field)
+  fieldData = ""
+  If("objectGUID" = field) Then
+    fieldData = GuidToString(objRecordSet.Fields("objectGUID").Value)
+  Else
+    fieldData = objRecordSet.Fields(field).Value
+  End If
+
+  If IsNull(fieldData) Then
+    fieldData = ""
+  End If
+  GetFieldDataFromRecordSet = fieldData
+End Function
+
 
 %>
