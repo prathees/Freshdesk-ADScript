@@ -36,7 +36,8 @@
     if authenticatedUser = "" then
         sErrorMessage = sErrorMessage & "ERROR: Your IIS probably allows anonymous access to this file."
     else
-        strUsername = split(authenticatedUser,"\")(1) 
+	    strSplitUsername = split(authenticatedUser,"\")
+        strUsername = strSplitUsername(UBound(strSplitUsername)) 
         Debug "Current Logged User : " & strUsername
 
         Set rootDSE = GetObject("LDAP://" & sDomainController & "/RootDSE")
