@@ -1,10 +1,15 @@
-<%
+<%@LANGUAGE="VBSCRIPT" CODEPAGE="65001"%>
+
+<% 
+    Response.Charset = "UTF-8"
+
+
     ' Shared secret from the remote authentication page 
     sToken     = "SECRET_SSO_TOKEN_FROM_FRESHDESK"
 
 
     sDomainName = "SIMPLE_DOMAIN_NAME" 'Provide the Simple Domain Name - eg: FRESHDESK
-    sDomainController = "DOMAIN_CONTROLLER" 'IP Address or FQDN of ActiveDirectory Server
+    sDomainController = "DOMAIN_CONTROLLER" 'IP Address or FQDN of ActiveDirectory Server - eg: ad-server01.freshdesk.com
     sAdminLogin = "DOMAIN_LOGIN_WITH_READ_ACCESS_IN_AD" 
     sAdminPassword = "PASSWORD_OF_ABOVE_LOGIN"
 
@@ -492,6 +497,226 @@ Function GetFieldDataFromRecordSet(objRecordSet, field)
     fieldData = ""
   End If
   GetFieldDataFromRecordSet = fieldData
+End Function
+
+
+
+
+Function normalize_str(strRemove)
+    ' Multidimensional array: http://camie.dyndns.org/technical/vbscript-arrays/
+    Dim arrWrapper(1)
+    Dim arrReplace(94)
+    Dim arrReplaceWith(94)
+    
+    arrWrapper(0) = arrReplace
+    arrWrapper(1) = arrReplace
+    
+    ' Replace
+    arrWrapper(0)(0) = "Š"
+    arrWrapper(0)(1) = "š"
+    arrWrapper(0)(2) = "Ð"
+    arrWrapper(0)(3) = "d"
+    arrWrapper(0)(4) = "Ž"
+    arrWrapper(0)(5) = "ž"
+    arrWrapper(0)(6) = "C"
+    arrWrapper(0)(7) = "c"
+    arrWrapper(0)(8) = "C"
+    arrWrapper(0)(9) = "c"
+    arrWrapper(0)(10) = "À"
+    arrWrapper(0)(11) = "Á"
+    arrWrapper(0)(12) = "Â"
+    arrWrapper(0)(13) = "Ã"
+    arrWrapper(0)(14) = "Ä"
+    arrWrapper(0)(15) = "Å"
+    arrWrapper(0)(16) = "Æ"
+    arrWrapper(0)(17) = "Ç"
+    arrWrapper(0)(18) = "È"
+    arrWrapper(0)(19) = "É"
+    arrWrapper(0)(20) = "Ê"
+    arrWrapper(0)(21) = "Ë"
+    arrWrapper(0)(22) = "Ì"
+    arrWrapper(0)(23) = "Í"
+    arrWrapper(0)(24) = "Î"
+    arrWrapper(0)(25) = "Ï"
+    arrWrapper(0)(26) = "Ñ"
+    arrWrapper(0)(27) = "Ò"
+    arrWrapper(0)(28) = "Ó"
+    arrWrapper(0)(29) = "Ô"
+    arrWrapper(0)(30) = "Õ"
+    arrWrapper(0)(31) = "Ö"
+    arrWrapper(0)(32) = "Ø"
+    arrWrapper(0)(33) = "Ù"
+    arrWrapper(0)(34) = "Ú"
+    arrWrapper(0)(35) = "Û"
+    arrWrapper(0)(36) = "Ü"
+    arrWrapper(0)(37) = "Ý"
+    arrWrapper(0)(38) = "Þ"
+    arrWrapper(0)(39) = "ß"
+    arrWrapper(0)(40) = "à"
+    arrWrapper(0)(41) = "á"
+    arrWrapper(0)(42) = "â"
+    arrWrapper(0)(43) = "ã"
+    arrWrapper(0)(44) = "ä"
+    arrWrapper(0)(45) = "å"
+    arrWrapper(0)(46) = "æ"
+    arrWrapper(0)(47) = "ª"
+    arrWrapper(0)(48) = "ç"
+    arrWrapper(0)(49) = "è"
+    arrWrapper(0)(50) = "é"
+    arrWrapper(0)(51) = "ê"
+    arrWrapper(0)(52) = "ë"
+    arrWrapper(0)(53) = "ì"
+    arrWrapper(0)(54) = "í"
+    arrWrapper(0)(55) = "î"
+    arrWrapper(0)(56) = "ï"
+    arrWrapper(0)(57) = "ð"
+    arrWrapper(0)(58) = "ñ"
+    arrWrapper(0)(59) = "ò"
+    arrWrapper(0)(60) = "ó"
+    arrWrapper(0)(61) = "ô"
+    arrWrapper(0)(62) = "õ"
+    arrWrapper(0)(63) = "ö"
+    arrWrapper(0)(64) = "ø"
+    arrWrapper(0)(65) = "ù"
+    arrWrapper(0)(66) = "ú"
+    arrWrapper(0)(67) = "û"
+    arrWrapper(0)(68) = "ü"
+    arrWrapper(0)(69) = "ý"
+    arrWrapper(0)(70) = "ý"
+    arrWrapper(0)(71) = "þ"
+    arrWrapper(0)(72) = "ÿ"
+    arrWrapper(0)(73) = "R"
+    arrWrapper(0)(74) = "r"
+    arrWrapper(0)(75) = "`"
+    arrWrapper(0)(76) = "´"
+    arrWrapper(0)(77) = "„"
+    arrWrapper(0)(78) = "`"
+    arrWrapper(0)(79) = "´"
+    arrWrapper(0)(80) = "€"
+    arrWrapper(0)(81) = "™"
+    arrWrapper(0)(82) = "{"
+    arrWrapper(0)(83) = "}"
+    arrWrapper(0)(84) = "~"
+    arrWrapper(0)(85) = "’"
+    arrWrapper(0)(86) = "'"
+    arrWrapper(0)(87) = "¶"
+    arrWrapper(0)(88) = "¼"
+    arrWrapper(0)(89) = "µ"
+    arrWrapper(0)(90) = "®"
+    arrWrapper(0)(91) = "/" 
+    arrWrapper(0)(92) = "|"
+    arrWrapper(0)(93) = "º"
+    arrWrapper(0)(94) = "&"
+     
+     ' With
+    arrWrapper(1)(0) = "S"
+    arrWrapper(1)(1) = "s"
+    arrWrapper(1)(2) = "Dj"
+    arrWrapper(1)(3) = "d"
+    arrWrapper(1)(4) = "Z"
+    arrWrapper(1)(5) = "z"
+    arrWrapper(1)(6) = "C"
+    arrWrapper(1)(7) = "c"
+    arrWrapper(1)(8) = "C"
+    arrWrapper(1)(9) = "c"
+    arrWrapper(1)(10) = "A"
+    arrWrapper(1)(11) = "A"
+    arrWrapper(1)(12) = "A"
+    arrWrapper(1)(13) = "A"
+    arrWrapper(1)(14) = "A"
+    arrWrapper(1)(15) = "A"
+    arrWrapper(1)(16) = "A"
+    arrWrapper(1)(17) = "C"
+    arrWrapper(1)(18) = "E"
+    arrWrapper(1)(19) = "E"
+    arrWrapper(1)(20) = "E"
+    arrWrapper(1)(21) = "E"
+    arrWrapper(1)(22) = "I"
+    arrWrapper(1)(23) = "I"
+    arrWrapper(1)(24) = "I"
+    arrWrapper(1)(25) = "I"
+    arrWrapper(1)(26) = "N"
+    arrWrapper(1)(27) = "O"
+    arrWrapper(1)(28) = "O"
+    arrWrapper(1)(29) = "O"
+    arrWrapper(1)(30) = "O"
+    arrWrapper(1)(31) = "O"
+    arrWrapper(1)(32) = "O"
+    arrWrapper(1)(33) = "U"
+    arrWrapper(1)(34) = "U"
+    arrWrapper(1)(35) = "U"
+    arrWrapper(1)(36) = "U"
+    arrWrapper(1)(37) = "Y"
+    arrWrapper(1)(38) = "B"
+    arrWrapper(1)(39) = "Ss"
+    arrWrapper(1)(40) = "a"
+    arrWrapper(1)(41) = "a"
+    arrWrapper(1)(42) = "a"
+    arrWrapper(1)(43) = "a"
+    arrWrapper(1)(44) = "a"
+    arrWrapper(1)(45) = "a"
+    arrWrapper(1)(46) = "a"
+    arrWrapper(1)(47) = "a"
+    arrWrapper(1)(48) = "c"
+    arrWrapper(1)(49) = "e"
+    arrWrapper(1)(50) = "e"
+    arrWrapper(1)(51) = "e"
+    arrWrapper(1)(52) = "e"
+    arrWrapper(1)(53) = "i"
+    arrWrapper(1)(54) = "i"
+    arrWrapper(1)(55) = "i"
+    arrWrapper(1)(56) = "i"
+    arrWrapper(1)(57) = "o"
+    arrWrapper(1)(58) = "n"
+    arrWrapper(1)(59) = "o"
+    arrWrapper(1)(60) = "o"
+    arrWrapper(1)(61) = "o"
+    arrWrapper(1)(62) = "o"
+    arrWrapper(1)(63) = "o"
+    arrWrapper(1)(64) = "o"
+    arrWrapper(1)(65) = "u"
+    arrWrapper(1)(66) = "u"
+    arrWrapper(1)(67) = "u"
+    arrWrapper(1)(68) = "u"
+    arrWrapper(1)(69) = "y"
+    arrWrapper(1)(70) = "y"
+    arrWrapper(1)(71) = "b"
+    arrWrapper(1)(72) = "y"
+    arrWrapper(1)(73) = "R"
+    arrWrapper(1)(74) = "r"
+    arrWrapper(1)(75) = ""
+    arrWrapper(1)(76) = ""
+    arrWrapper(1)(77) = ","
+    arrWrapper(1)(78) = ""
+    arrWrapper(1)(79) = ""
+    arrWrapper(1)(80) = ""
+    arrWrapper(1)(81) = ""
+    arrWrapper(1)(82) = ""
+    arrWrapper(1)(83) = ""
+    arrWrapper(1)(84) = ""
+    arrWrapper(1)(85) = ""
+    arrWrapper(1)(86) = ""
+    arrWrapper(1)(87) = ""
+    arrWrapper(1)(88) = ""
+    arrWrapper(1)(89) = "u"
+    arrWrapper(1)(90) = ""
+    arrWrapper(1)(91) = "." 
+    arrWrapper(1)(92) = "-"
+    arrWrapper(1)(93) = ""
+    arrWrapper(1)(94) = "e"
+
+    
+    'WScript.Echo "Remove str: " & strRemove
+    For N = 0 To 94
+        'WScript.Echo "Replace " & arrWrapper(0)(N) & " with " & arrWrapper(1)(N)
+        ' http://www.w3schools.com/vbscript/func_replace.asp
+        ' 1: Start find from 1st character
+        ' -1: Find until string does not End
+        ' 0: binary comparision. Respect uppercase from lowercase.
+        strRemove = Replace(strRemove, arrWrapper(0)(N), arrWrapper(1)(N), 1, -1, 0)
+    Next
+    
+    normalize_str = strRemove
 End Function
 
 
